@@ -8,6 +8,10 @@ import discord
 import asyncio
 import os
 import sys
+from pathlib import Path
+
+# Add filters directory to path
+sys.path.insert(0, str(Path(__file__).parent))
 
 # TTS support
 try:
@@ -16,6 +20,13 @@ except ImportError:
     print("❌ pyttsx3 not installed!")
     print("   Install with: pip3 install pyttsx3")
     sys.exit(1)
+
+# Text cleaning
+try:
+    from filters.text_cleaner import TextCleaner
+except ImportError:
+    print("⚠️  Text cleaner not found, will speak raw text")
+    TextCleaner = None
 
 
 class OrangeVoiceListener(discord.Client):
@@ -32,10 +43,16 @@ class OrangeVoiceListener(discord.Client):
         self.tts_engine = pyttsx3.init()
         self.tts_engine.setProperty('rate', 180)  # Orange energy!
         self.tts_engine.setProperty('volume', 0.9)
-        
+
+        # Initialize text cleaner
+        self.text_cleaner = TextCleaner() if TextCleaner else None
+        self.filter_repetitions = kwargs.pop('filter_repetitions', False)
+
         print("🍊 Orange Voice Listener initialized!")
         print(f"   Monitoring user ID: {self.orange_user_id}")
         print(f"   Channels: {self.monitored_channels}")
+        print(f"   Text cleaning: {'enabled' if self.text_cleaner else 'disabled'}")
+        print(f"   Filter repetitions: {self.filter_repetitions}")
 
     async def on_ready(self):
         print(f"✅ Connected as {self.user}!")
@@ -59,9 +76,20 @@ class OrangeVoiceListener(discord.Client):
         
         # Speak the message!
         print(f"🍊 [{channel_name}] Orange: {message.content}")
-        
+
         if message.content:
-            self.tts_engine.say(message.content)
+            # Clean text for TTS
+            text_to_speak = message.content
+            if self.text_cleaner:
+                text_to_speak = self.text_cleaner.clean(
+                    message.content,
+                    speaker_name='orange',
+                    filter_repetitions=self.filter_repetitions
+                )
+                if text_to_speak != message.content:
+                    print(f"   Cleaned: {text_to_speak}")
+
+            self.tts_engine.say(text_to_speak)
             self.tts_engine.runAndWait()
         else:
             print("  → No text content to speak")
@@ -72,22 +100,24 @@ def main():
     BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
     ORANGE_USER_ID = os.getenv('ORANGE_USER_ID', '1423002008192815134')
     CHANNELS = os.getenv('MONITOR_CHANNELS', 'amy-🍊').split(',')
-    
+    FILTER_REPS = os.getenv('FILTER_REPETITIONS', 'false').lower() == 'true'
+
     if not BOT_TOKEN:
         print("❌ DISCORD_BOT_TOKEN not set!")
         print("   Set it in environment or create .env file")
         sys.exit(1)
-    
+
     # Create client with message content intent
     intents = discord.Intents.default()
     intents.message_content = True
-    
+
     client = OrangeVoiceListener(
         intents=intents,
         orange_user_id=ORANGE_USER_ID,
-        channels=CHANNELS
+        channels=CHANNELS,
+        filter_repetitions=FILTER_REPS
     )
-    
+
     print("🎤 Starting Orange Voice Listener...")
     client.run(BOT_TOKEN)
 

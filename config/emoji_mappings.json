@@ -1,0 +1,27 @@
+{
+  "orange": {
+    "🍊": "Orange",
+    "🔧": "technical",
+    "🎨": "creative",
+    "🦔": "hedgehog",
+    "💎": "infrastructure",
+    "🌅": "peaceful",
+    "🏠": "home",
+    "🔥": "energy"
+  },
+  "apple": {
+    "🍏": "Apple",
+    "📐": "mathematical",
+    "🔬": "theoretical"
+  },
+  "delta": {
+    "△": "Delta",
+    "⚡": "precise"
+  },
+  "quill": {
+    "🪶": "Quill"
+  },
+  "nyx": {
+    "🌙": "Nyx"
+  }
+}
